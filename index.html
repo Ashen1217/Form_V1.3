@@ -42,6 +42,23 @@
             }, 100);
         });
     </script>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Force immediate visibility of critical elements
+        document.querySelector('.form-wrapper').style.display = 'block';
+        document.querySelector('.form-wrapper').style.opacity = '1';
+        document.querySelector('.form-wrapper').style.visibility = 'visible';
+        
+        // Ensure header and first section are immediately visible
+        document.querySelector('.header-text-container').style.opacity = '1';
+        document.querySelector('.header-text-container').style.visibility = 'visible';
+        
+        // Remove any transform that might be causing spacing issues
+        document.querySelectorAll('.form-section').forEach(section => {
+            section.style.transform = 'none';
+        });
+    });
+    </script>
 </head>
 <body class="min-h-screen p-4 bg-gradient-to-br from-gray-50 to-gray-100">
     <!-- System Info (Hidden) -->
