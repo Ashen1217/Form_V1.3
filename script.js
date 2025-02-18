@@ -1,5 +1,5 @@
 // Constants
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwBlsZE4W43gfswx6p6bFeVeW0mWZ2FJBXIlIna9nuOcO1Mpz0k8nj8Enrw0Elf8GA-/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzpLow9FVw-ZnRVpaFBshp5ZbMsEH_SnnHhMmOY8UBSToJowRYhXx8_0HRs2kfFy4tJ/exec';
 const CURRENT_SL_TIME = '2025-02-18 01:57:45';  // Current Sri Lanka time
 const USER_LOGIN = 'Ashen1217';
 
@@ -133,7 +133,14 @@ async function searchCompanies(searchTerm) {
                     districtInput.value = company[3] || '';
                     searchResultsDiv.style.display = 'none';
                     searchResultsDiv.innerHTML = '';
-                    validateField('companySearch');
+                    
+                    // Clear error messages immediately when company is selected
+                    ['companySearch', 'customerCode', 'town', 'district'].forEach(fieldId => {
+                        const errorDiv = document.getElementById(`${fieldId}Error`);
+                        const field = document.getElementById(fieldId);
+                        if (errorDiv) errorDiv.textContent = '';
+                        if (field) field.classList.remove('error');
+                    });
                 });
 
                 searchResultsDiv.appendChild(resultItem);
@@ -233,9 +240,205 @@ function validateField(fieldId) {
     return isValid;
 }
 
-// Validate form
+// Add this function after validateField function
+function scrollToError(fieldElement) {
+    gsap.to(window, {
+        duration: 0.8,
+        scrollTo: {
+            y: fieldElement,
+            offsetY: 100,
+        },
+        ease: "power2.inOut"
+    });
+}
+
+// Add this function after validateField function
+function scrollToFirstError() {
+    const errorFields = document.querySelectorAll('.error');
+    if (errorFields.length > 0) {
+        gsap.to(window, {
+            duration: 1,
+            scrollTo: {
+                y: errorFields[0],
+                offsetY: 100,
+            },
+            ease: "power3.inOut"
+        });
+        
+        // Highlight the error field temporarily
+        gsap.to(errorFields[0], {
+            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+            duration: 0.3,
+            repeat: 1,
+            yoyo: true
+        });
+    }
+}
+
+// Add this function for ordered field validation and scrolling
+function validateFormInOrder() {
+    // Define fields in the order they appear in the form
+    const orderedFields = [
+        'companySearch',
+        'customerCode',
+        'town',
+        'district',
+        'participantName',
+        'surname',
+        'dateOfBirth',
+        'mobileNumber',
+        'gender',
+        'relationshipStatus',
+        'passportNumber',
+        'issueDate',
+        'expiryDate',
+        'tshirtSize',
+        'mealPreference',
+        'additionalParticipants'
+    ];
+
+    let firstError = null;
+    let isValid = true;
+
+    // Check each field in order
+    for (const fieldId of orderedFields) {
+        if (fieldId === 'gender' || fieldId === 'mealPreference' || fieldId === 'additionalParticipants') {
+            // Handle radio groups
+            const checked = document.querySelector(`input[name="${fieldId}"]:checked`);
+            const errorDiv = document.getElementById(`${fieldId}Error`);
+            
+            if (!checked && errorDiv) {
+                errorDiv.textContent = 'Please select an option';
+                if (!firstError) {
+                    firstError = document.querySelector(`input[name="${fieldId}"]`).parentElement;
+                    // Scroll to first error immediately
+                    gsap.to(window, {
+                        duration: 1,
+                        scrollTo: {
+                            y: firstError,
+                            offsetY: 100
+                        },
+                        ease: "power3.inOut"
+                    });
+                    return false; // Stop validation after first error
+                }
+                isValid = false;
+            }
+        } else {
+            // Handle regular input fields
+            if (!validateField(fieldId) && !firstError) {
+                firstError = document.getElementById(fieldId);
+                // Scroll to first error immediately
+                gsap.to(window, {
+                    duration: 1,
+                    scrollTo: {
+                        y: firstError,
+                        offsetY: 100
+                    },
+                    ease: "power3.inOut"
+                });
+                return false; // Stop validation after first error
+            }
+        }
+    }
+
+    return isValid;
+}
+
+// Add this function for sequential field validation
+function validateAndScrollToFirstError() {
+    const fieldOrder = [
+        { id: 'companySearch', type: 'input' },
+        { id: 'customerCode', type: 'input' },
+        { id: 'town', type: 'input' },
+        { id: 'district', type: 'input' },
+        { id: 'participantName', type: 'input' },
+        { id: 'surname', type: 'input' },
+        { id: 'dateOfBirth', type: 'input' },
+        { id: 'mobileNumber', type: 'input' },
+        { id: 'gender', type: 'radio' },
+        { id: 'relationshipStatus', type: 'input' },
+        { id: 'passportNumber', type: 'input' },
+        { id: 'issueDate', type: 'input' },
+        { id: 'expiryDate', type: 'input' },
+        { id: 'tshirtSize', type: 'input' },
+        { id: 'mealPreference', type: 'radio' },
+        { id: 'additionalParticipants', type: 'radio' }
+    ];
+
+    for (const field of fieldOrder) {
+        if (field.type === 'radio') {
+            const checked = document.querySelector(`input[name="${field.id}"]:checked`);
+            const errorDiv = document.getElementById(`${field.id}Error`);
+            
+            if (!checked && errorDiv) {
+                const radioGroup = document.querySelector(`input[name="${field.id}"]`).parentElement;
+                errorDiv.textContent = 'Please select an option';
+                
+                // Enhanced scroll with adaptive offset
+                gsap.to(window, {
+                    duration: 1,
+                    scrollTo: {
+                        y: radioGroup,
+                        offsetY: getScrollOffset(),
+                        autoKill: false // Ensures scroll works on mobile
+                    },
+                    ease: "power3.inOut",
+                    onComplete: () => {
+                        // Add visual feedback after scrolling
+                        gsap.fromTo(radioGroup,
+                            { backgroundColor: 'rgba(239, 68, 68, 0.1)' },
+                            { 
+                                backgroundColor: 'transparent', 
+                                duration: 1.5,
+                                ease: "power2.inOut"
+                            }
+                        );
+                    }
+                });
+
+                return false;
+            }
+        } else {
+            if (!validateField(field.id)) {
+                const element = document.getElementById(field.id);
+                
+                // Enhanced scroll with adaptive offset
+                gsap.to(window, {
+                    duration: 1,
+                    scrollTo: {
+                        y: element,
+                        offsetY: getScrollOffset(),
+                        autoKill: false // Ensures scroll works on mobile
+                    },
+                    ease: "power3.inOut",
+                    onComplete: () => {
+                        // Add visual feedback after scrolling
+                        gsap.fromTo(element,
+                            { backgroundColor: 'rgba(239, 68, 68, 0.1)' },
+                            { 
+                                backgroundColor: 'transparent', 
+                                duration: 1.5,
+                                ease: "power2.inOut"
+                            }
+                        );
+                        // Focus the field after scrolling
+                        element.focus();
+                    }
+                });
+
+                return false;
+            }
+        }
+    }
+
+    return true;
+}
+
+// Modify validateForm function
 function validateForm() {
     let isValid = true;
+    let firstError = null;
     
     const requiredFields = [
         'companySearch',
@@ -256,6 +459,9 @@ function validateForm() {
     requiredFields.forEach(fieldId => {
         if (!validateField(fieldId)) {
             isValid = false;
+            if (!firstError) {
+                firstError = document.getElementById(fieldId);
+            }
         }
     });
 
@@ -267,15 +473,27 @@ function validateForm() {
         if (!checked && errorDiv) {
             errorDiv.textContent = 'Please select an option';
             isValid = false;
+            if (!firstError) {
+                firstError = document.querySelector(`input[name="${groupName}"]`).parentElement;
+            }
         }
     });
+
+    // Scroll to first error if found
+    if (firstError) {
+        scrollToError(firstError);
+    }
 
     return isValid;
 }
 
-// Show success message
+// Modified showSuccessMessage function
 function showSuccessMessage(submissionDateTime) {
     const thankYouMessage = document.getElementById('thankYouMessage');
+    const formInputs = document.getElementById('formInputs');
+    
+    formInputs.style.display = 'none';
+    thankYouMessage.classList.remove('hidden');
     
     thankYouMessage.innerHTML = `
         <div class="success-message">
@@ -290,17 +508,16 @@ function showSuccessMessage(submissionDateTime) {
                 <div class="submission-details p-4 bg-gray-50 rounded-lg mb-6">
                     <p class="text-sm text-gray-600">
                         <span class="font-medium">Submission Details:</span><br>
-                        Submitted on: ${submissionDateTime}
+                        Submitted on: <span class="sl-time">${formatSriLankaDateTime()}</span>
                     </p>
                 </div>
                 <button type="button" onclick="resetForm()" 
-                    class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                    class="submit-another-btn bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-300 transform hover:scale-105">
                     Submit Another Application
                 </button>
             </div>
         </div>
     `;
-    thankYouMessage.classList.remove('hidden');
 }
 
 // Show/hide loading state
@@ -312,27 +529,25 @@ function showLoadingState(show) {
     const spinner = document.getElementById('spinner');
 
     if (show) {
-        loadingOverlay.classList.add('visible');
-        formInputs.style.opacity = '0.5';
-        formInputs.style.pointerEvents = 'none';
-        submitButton.disabled = true;
-        buttonText.textContent = 'Processing...';
-        spinner.classList.remove('hidden');
+        gsap.to('#loadingOverlay', {
+            opacity: 1,
+            visibility: 'visible',
+            duration: 0.3
+        });
     } else {
-        loadingOverlay.classList.remove('visible');
-        formInputs.style.opacity = '1';
-        formInputs.style.pointerEvents = 'auto';
-        submitButton.disabled = false;
-        buttonText.textContent = 'Submit Application';
-        spinner.classList.add('hidden');
+        gsap.to('#loadingOverlay', {
+            opacity: 0,
+            visibility: 'hidden',
+            duration: 0.3
+        });
     }
 }
 
-// Handle form submission
+// Modify handleSubmit function
 async function handleSubmit(event) {
     event.preventDefault();
 
-    if (!validateForm()) {
+    if (!validateAndScrollToFirstError()) {
         return;
     }
 
@@ -406,7 +621,7 @@ async function handleSubmit(event) {
     }
 }
 
-// Reset form
+// Modified resetForm function
 function resetForm() {
     const form = document.getElementById('participantForm');
     const formInputs = document.getElementById('formInputs');
@@ -421,9 +636,7 @@ function resetForm() {
     // Reset readonly fields
     ['customerCode', 'town', 'district', 'age', 'expiryDate'].forEach(id => {
         const element = document.getElementById(id);
-        if (element) {
-            element.value = '';
-        }
+        if (element) element.value = '';
     });
 
     // Reset search results
@@ -433,13 +646,27 @@ function resetForm() {
         searchResults.innerHTML = '';
     }
     
-    formInputs.style.display = 'block';
-    formInputs.style.opacity = '1';
-    formInputs.style.pointerEvents = 'auto';
-    thankYouMessage.classList.add('hidden');
+    // Show form inputs and hide thank you message with animation
+    gsap.to(thankYouMessage, {
+        opacity: 0,
+        duration: 0.3,
+        onComplete: () => {
+            thankYouMessage.classList.add('hidden');
+            formInputs.style.display = 'block';
+            gsap.from(formInputs, {
+                opacity: 0,
+                y: 20,
+                duration: 0.5
+            });
+        }
+    });
     
-    // Scroll to top
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    // Scroll to top with animation
+    gsap.to(window, {
+        duration: 0.8,
+        scrollTo: { y: 0 },
+        ease: 'power2.inOut'
+    });
 }
 
 // Initialize form listeners
@@ -636,8 +863,88 @@ function initializeFormListeners() {
     });
 }
 
+// Initialize GSAP animations
+function initializeAnimations() {
+    gsap.registerPlugin(ScrollTrigger);
+    
+    // Ensure form is visible before animations
+    document.querySelector('.form-wrapper').style.opacity = '1';
+    document.querySelector('.form-wrapper').style.transform = 'none';
+    
+    // Modified initial animation
+    gsap.from('.form-wrapper', {
+        opacity: 0,
+        y: 20,
+        duration: 1,
+        ease: 'power3.out',
+        clearProps: 'all' // Clear properties after animation
+    });
+
+    // Modified section animations
+    gsap.utils.toArray('.form-section').forEach((section, i) => {
+        gsap.from(section, {
+            opacity: 0,
+            y: 50,
+            duration: 0.8,
+            ease: 'power3.out',
+            scrollTrigger: {
+                trigger: section,
+                start: 'top 80%',
+                toggleActions: 'play none none reverse'
+            },
+            clearProps: 'all' // Clear properties after animation
+        });
+    });
+
+    // Smooth scroll to fields with errors
+    const smoothScrollToError = (element) => {
+        gsap.to(window, {
+            duration: 0.8,
+            scrollTo: {
+                y: element,
+                offsetY: 100
+            },
+            ease: 'power3.inOut'
+        });
+    };
+
+    // Enhanced form validation feedback
+    const inputs = document.querySelectorAll('.form-input');
+    inputs.forEach(input => {
+        input.addEventListener('focus', () => {
+            gsap.to(input, {
+                scale: 1.01,
+                duration: 0.3,
+                ease: 'power2.out'
+            });
+        });
+
+        input.addEventListener('blur', () => {
+            gsap.to(input, {
+                scale: 1,
+                duration: 0.3,
+                ease: 'power2.out'
+            });
+        });
+    });
+}
+
+// Add this function for adaptive scroll offset
+function getScrollOffset() {
+    // Return different offset based on screen size
+    return window.innerWidth <= 768 ? 50 : 100;
+}
+
 // Initialize everything when the page loads
 document.addEventListener('DOMContentLoaded', function() {
+    // Initialize AOS
+    AOS.init({
+        duration: 800,
+        once: true,
+        offset: 100
+    });
+    
+    initializeAnimations();
     initializeFormListeners();
     
     // Update the current date time display with Sri Lanka time
