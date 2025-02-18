@@ -27,7 +27,7 @@ body {
 .form-container {
   max-width: 1024px;
   margin: 0 auto;
-  padding: 1rem;
+  padding: 0.5rem;
 }
 
 /* Header Image Container */
@@ -67,8 +67,8 @@ body {
 .form-section {
   background: var(--form-bg);
   border-radius: 0.75rem;
-  padding: 2rem;
-  margin-bottom: 1.5rem;
+  padding: 1.25rem;
+  margin-bottom: 1rem;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   transition: transform var(--animation-timing) ease;
   animation: fadeIn 0.5s ease-out;
@@ -81,7 +81,7 @@ body {
 
 /* Form Groups */
 .form-group {
-  margin-bottom: 1.5rem;
+  margin-bottom: 1rem;
   position: relative;
 }
 
@@ -102,11 +102,11 @@ body {
 /* Form Inputs */
 .form-input {
   width: 100%;
-  padding: 0.75rem 1rem;
+  padding: 0.625rem 0.875rem;
   border: 2px solid var(--border-color);
   border-radius: 0.5rem;
   transition: all var(--animation-timing) ease;
-  font-size: 1rem;
+  font-size: 16px; /* Prevent zoom on mobile */
   background-color: var(--form-bg);
 }
 
@@ -383,7 +383,8 @@ body {
 /* Responsive Design */
 @media (max-width: 768px) {
   .form-section {
-      padding: 1.5rem;
+      padding: 1rem;
+      margin-bottom: 0.75rem;
   }
 
   .submit-button {
@@ -406,12 +407,77 @@ body {
   .header-text-container {
     padding: 1rem;
   }
+
+  body {
+    padding: 0.5rem;
+  }
+
+  .form-container {
+    padding: 0.25rem;
+  }
+
+  .grid {
+    gap: 0.75rem !important;
+  }
+
+  /* Adjust input heights for better touch targets */
+  .form-input, 
+  select.form-input,
+  .submit-button {
+    min-height: 3rem;
+  }
+
+  /* Make radio buttons and checkboxes easier to tap */
+  input[type="radio"],
+  input[type="checkbox"] {
+    min-width: 1.5rem;
+    min-height: 1.5rem;
+  }
+
+  /* Improve readability of labels */
+  .form-group label {
+    font-size: 0.9375rem;
+    margin-bottom: 0.25rem;
+  }
+
+  /* Adjust heading sizes */
+  h2.text-2xl {
+    font-size: 1.25rem;
+  }
+
+  /* Improve spacing in radio groups */
+  .space-y-2 > * {
+    margin-top: 0.75rem;
+    margin-bottom: 0.75rem;
+  }
+
+  /* Make select dropdowns more touch-friendly */
+  select.form-input {
+    background-position: right 0.75rem center;
+    padding-right: 2.5rem;
+  }
+
+  /* Adjust error messages */
+  .error-message {
+    font-size: 0.8125rem;
+  }
 }
 
 @media (min-width: 1024px) {
   .header-image-container {
     min-height: 250px;
     max-height: 300px;
+  }
+}
+
+/* Tablet Optimizations */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .form-container {
+    padding: 1rem;
+  }
+
+  .form-section {
+    padding: 1.5rem;
   }
 }
 
@@ -453,4 +519,15 @@ body {
 .sl-time {
     font-family: 'Courier New', monospace;
     font-weight: bold;
+}
+
+/* Better touch targets for all interactive elements */
+@media (hover: none) {
+  .form-input,
+  .submit-button,
+  select,
+  input[type="radio"],
+  input[type="checkbox"] {
+    cursor: default;
+  }
 }
