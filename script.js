@@ -240,15 +240,15 @@ function validateField(fieldId) {
     return isValid;
 }
 
-// Add this function after validateField function
+// Update scrollToError function
 function scrollToError(fieldElement) {
     gsap.to(window, {
-        duration: 0.8,
+        duration: 1.5, // Increased from 0.8 to 1.5
         scrollTo: {
             y: fieldElement,
             offsetY: 100,
         },
-        ease: "power2.inOut"
+        ease: "power2.out" // Changed from power2.inOut for smoother deceleration
     });
 }
 
@@ -345,7 +345,7 @@ function validateFormInOrder() {
     return isValid;
 }
 
-// Add this function for sequential field validation
+// Update validateAndScrollToFirstError function
 function validateAndScrollToFirstError() {
     const fieldOrder = [
         { id: 'companySearch', type: 'input' },
@@ -377,20 +377,20 @@ function validateAndScrollToFirstError() {
                 
                 // Enhanced scroll with adaptive offset
                 gsap.to(window, {
-                    duration: 1,
+                    duration: 1.5, // Increased duration
                     scrollTo: {
                         y: radioGroup,
                         offsetY: getScrollOffset(),
                         autoKill: false // Ensures scroll works on mobile
                     },
-                    ease: "power3.inOut",
+                    ease: "power2.out", // Smoother easing
                     onComplete: () => {
                         // Add visual feedback after scrolling
                         gsap.fromTo(radioGroup,
                             { backgroundColor: 'rgba(239, 68, 68, 0.1)' },
                             { 
                                 backgroundColor: 'transparent', 
-                                duration: 1.5,
+                                duration: 2, // Increased highlight duration
                                 ease: "power2.inOut"
                             }
                         );
@@ -405,20 +405,20 @@ function validateAndScrollToFirstError() {
                 
                 // Enhanced scroll with adaptive offset
                 gsap.to(window, {
-                    duration: 1,
+                    duration: 1.5, // Increased duration
                     scrollTo: {
                         y: element,
                         offsetY: getScrollOffset(),
                         autoKill: false // Ensures scroll works on mobile
                     },
-                    ease: "power3.inOut",
+                    ease: "power2.out", // Smoother easing
                     onComplete: () => {
                         // Add visual feedback after scrolling
                         gsap.fromTo(element,
                             { backgroundColor: 'rgba(239, 68, 68, 0.1)' },
                             { 
                                 backgroundColor: 'transparent', 
-                                duration: 1.5,
+                                duration: 2, // Increased highlight duration
                                 ease: "power2.inOut"
                             }
                         );
