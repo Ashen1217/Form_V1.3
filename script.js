@@ -1,24 +1,33 @@
 // Constants
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw3QZqobXTDFbi2WUc28DLrhVQoZ2JVTfsXOKkteNCk_Wh5DjFhnfPzeEQ0d9ZPnQvZ/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwBlsZE4W43gfswx6p6bFeVeW0mWZ2FJBXIlIna9nuOcO1Mpz0k8nj8Enrw0Elf8GA-/exec';
+const CURRENT_SL_TIME = '2025-02-18 01:57:45';  // Current Sri Lanka time
+const USER_LOGIN = 'Ashen1217';
 
-// Format date and time in Sri Lanka time zone
+// Format Sri Lanka date and time
 function formatSriLankaDateTime() {
     const now = new Date();
-    const sriLankaTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Colombo' }));
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    let hours = now.getHours();
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    hours = hours % 12;
+    hours = hours ? hours : 12; // Convert 0 to 12
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    const seconds = String(now.getSeconds()).padStart(2, '0');
     
-    const year = sriLankaTime.getFullYear();
-    const month = String(sriLankaTime.getMonth() + 1).padStart(2, '0');
-    const day = String(sriLankaTime.getDate()).padStart(2, '0');
-    const hours = String(sriLankaTime.getHours()).padStart(2, '0');
-    const minutes = String(sriLankaTime.getMinutes()).padStart(2, '0');
-    const seconds = String(sriLankaTime.getSeconds()).padStart(2, '0');
-    
-    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+    return `${year}-${month}-${day} ${String(hours).padStart(2, '0')}:${minutes}:${seconds} ${ampm}`;
 }
 
 // Get submission date time
 function getSubmissionDateTime() {
-    return formatSriLankaDateTime();
+    return CURRENT_SL_TIME;
+}
+
+// Validate name format
+function validateNameFormat(name) {
+    // Only allow uppercase letters and single space between words
+    return /^[A-Z]+(?:\s[A-Z]+)*$/.test(name);
 }
 
 // Calculate age from date of birth
@@ -101,6 +110,7 @@ async function searchCompanies(searchTerm) {
 
             if (!Array.isArray(companies) || companies.length === 0) {
                 searchResultsDiv.innerHTML = '<div class="search-no-results">No matching companies found</div>';
+                searchResultsDiv.style.display = 'block';
                 return;
             }
 
@@ -122,6 +132,7 @@ async function searchCompanies(searchTerm) {
                     townInput.value = company[2] || '';
                     districtInput.value = company[3] || '';
                     searchResultsDiv.style.display = 'none';
+                    searchResultsDiv.innerHTML = '';
                     validateField('companySearch');
                 });
 
@@ -133,6 +144,7 @@ async function searchCompanies(searchTerm) {
         } catch (error) {
             console.error('Error fetching companies:', error);
             searchResultsDiv.innerHTML = '<div class="search-error">Error fetching results. Please try again.</div>';
+            searchResultsDiv.style.display = 'block';
         }
     }, 300);
 }
@@ -151,13 +163,32 @@ function validateField(fieldId) {
     errorDiv.textContent = '';
 
     switch(fieldId) {
+        case 'participantName':
+        case 'surname':
+            if (field.value.trim() === '') {
+                isValid = false;
+                errorMessage = `${fieldId === 'participantName' ? 'Full Name' : 'Surname'} is required`;
+            } else if (!validateNameFormat(field.value.trim())) {
+                isValid = false;
+                errorMessage = 'Only uppercase letters (A-Z) and single spaces between names are allowed';
+            }
+            break;
+
+        case 'otherNames':
+            if (field.value.trim() !== '' && !validateNameFormat(field.value.trim())) {
+                isValid = false;
+                errorMessage = 'Only uppercase letters (A-Z) and single spaces between names are allowed';
+            }
+            break;
+
         case 'companySearch':
             isValid = field.value.trim() !== '';
             errorMessage = 'Please select a company';
             break;
 
         case 'mobileNumber':
-            isValid = /^07[0-9]{8}$/.test(field.value);
+            const numericValue = field.value.replace(/\s/g, '');
+            isValid = /^07[0-9]{8}$/.test(numericValue);
             errorMessage = 'Invalid mobile number format (07XXXXXXXX)';
             break;
 
@@ -243,9 +274,8 @@ function validateForm() {
 }
 
 // Show success message
-function showSuccessMessage() {
+function showSuccessMessage(submissionDateTime) {
     const thankYouMessage = document.getElementById('thankYouMessage');
-    const submissionTime = getSubmissionDateTime();
     
     thankYouMessage.innerHTML = `
         <div class="success-message">
@@ -260,8 +290,7 @@ function showSuccessMessage() {
                 <div class="submission-details p-4 bg-gray-50 rounded-lg mb-6">
                     <p class="text-sm text-gray-600">
                         <span class="font-medium">Submission Details:</span><br>
-                        Submitted on: ${submissionTime} (Sri Lanka Time)<br>
-                        Submitted by: ${document.getElementById('userLogin').textContent}
+                        Submitted on: ${submissionDateTime}
                     </p>
                 </div>
                 <button type="button" onclick="resetForm()" 
@@ -315,16 +344,20 @@ async function handleSubmit(event) {
         const data = {};
 
         for (const [key, value] of formData.entries()) {
-            if (['participantName', 'surname', 'otherNames', 'passportNumber'].includes(key)) {
+            if (['participantName', 'surname', 'otherNames'].includes(key)) {
                 data[key] = value.trim().toUpperCase();
+            } else if (['passportNumber'].includes(key)) {
+                data[key] = value.trim().toUpperCase();
+            } else if (key === 'mobileNumber') {
+                // Remove spaces from mobile number before saving
+                data[key] = value.trim().replace(/\s/g, '');
             } else {
                 data[key] = value.trim();
             }
         }
 
         // Add submission metadata with Sri Lanka time
-        data.submissionDateTime = getSubmissionDateTime();
-        data.userLogin = document.getElementById('userLogin').textContent;
+        data.submissionDateTime = formatSriLankaDateTime();
 
         const response = await fetch(
             `${SCRIPT_URL}?data=${encodeURIComponent(JSON.stringify(data))}`,
@@ -345,7 +378,7 @@ async function handleSubmit(event) {
 
         if (result.result === 'success') {
             document.getElementById('formInputs').style.display = 'none';
-            showSuccessMessage();
+            showSuccessMessage(result.submissionDateTime);
         } else {
             const errorMessage = result.error;
             if (errorMessage.includes('(')) {
@@ -419,6 +452,75 @@ function initializeFormListeners() {
         });
     }
 
+    // Name fields listeners
+    const nameFields = ['participantName', 'surname', 'otherNames'];
+    nameFields.forEach(fieldId => {
+        const input = document.getElementById(fieldId);
+        if (input) {
+            // Handle input events
+            input.addEventListener('input', function(e) {
+                // Convert to uppercase immediately
+                let value = this.value.toUpperCase();
+                
+                // Remove any characters that aren't letters or spaces
+                value = value.replace(/[^A-Z\s]/g, '');
+                
+                // Remove consecutive spaces
+                value = value.replace(/\s{2,}/g, ' ');
+                
+                // Remove spaces at the start
+                value = value.replace(/^\s/, '');
+                
+                // Update input value
+                this.value = value;
+                
+                validateField(fieldId);
+            });
+
+            // Handle blur event
+            input.addEventListener('blur', function() {
+                // Remove space at the end
+                this.value = this.value.trim().toUpperCase();
+                validateField(fieldId);
+            });
+
+            // Handle paste event
+            input.addEventListener('paste', function(e) {
+                e.preventDefault();
+                const text = (e.clipboardData || window.clipboardData).getData('text');
+                
+                // Clean the pasted text
+                const cleaned = text
+                    .toUpperCase() // Convert to uppercase
+                    .replace(/[^A-Z\s]/g, '') // Remove non-letters and non-spaces
+                    .replace(/\s{2,}/g, ' ') // Remove consecutive spaces
+                    .trim(); // Remove leading and trailing spaces
+                
+                // Insert at cursor position
+                const start = this.selectionStart;
+                const end = this.selectionEnd;
+                const before = this.value.substring(0, start);
+                const after = this.value.substring(end);
+                this.value = before + cleaned + after;
+                
+                // Move cursor to the right position
+                const newCursorPos = start + cleaned.length;
+                this.setSelectionRange(newCursorPos, newCursorPos);
+                
+                validateField(fieldId);
+            });
+
+            // Handle keydown to prevent lowercase input
+            input.addEventListener('keydown', function(e) {
+                if (e.key.length === 1 && !e.ctrlKey && !e.altKey && !e.metaKey) {
+                    if (!/[A-Z\s]/.test(e.key.toUpperCase())) {
+                        e.preventDefault();
+                    }
+                }
+            });
+        }
+    });
+
     // Date of birth listener
     const dateOfBirthInput = document.getElementById('dateOfBirth');
     if (dateOfBirthInput) {
@@ -428,7 +530,6 @@ function initializeFormListeners() {
             validateField('dateOfBirth');
         });
 
-        // Set max date to today
         const today = new Date().toISOString().split('T')[0];
         dateOfBirthInput.setAttribute('max', today);
     }
@@ -442,7 +543,6 @@ function initializeFormListeners() {
             validateField('issueDate');
         });
 
-        // Set max date to today
         const today = new Date().toISOString().split('T')[0];
         issueDateInput.setAttribute('max', today);
     }
@@ -451,24 +551,21 @@ function initializeFormListeners() {
     const mobileNumberInput = document.getElementById('mobileNumber');
     if (mobileNumberInput) {
         mobileNumberInput.addEventListener('input', function() {
-            this.value = this.value.replace(/[^0-9]/g, '');
-            validateField('mobileNumber');
+            // Remove any non-digits
+            let value = this.value.replace(/[^0-9]/g, '');
             
-            const errorDiv = document.getElementById('mobileNumberError');
-            const mobileRegex = /^07[0-9]{8}$/;
-            
-            if (!mobileRegex.test(this.value)) {
-                errorDiv.textContent = 'Invalid mobile number format (07XXXXXXXX)';
-                this.classList.add('error');
-            } else {
-                errorDiv.textContent = '';
-                this.classList.remove('error');
+            // Truncate to max 10 digits
+            if (value.length > 10) {
+                value = value.slice(0, 10);
             }
+            
+            this.value = value;
+            validateField('mobileNumber');
         });
 
         mobileNumberInput.addEventListener('blur', function() {
             if (this.value && !/^07/.test(this.value)) {
-                this.value = '07' + this.value;
+                this.value = '07' + this.value.replace(/^0+/, '');
             }
             validateField('mobileNumber');
         });
@@ -493,6 +590,7 @@ function initializeFormListeners() {
             const errorDiv = document.getElementById('passportNumberError');
             errorDiv.textContent = 'Checking passport number...';
             
+            // Debounce the API call (wait 500ms after user stops typing)
             timeoutId = setTimeout(async () => {
                 try {
                     const isDuplicate = await checkDuplicatePassport(this.value);
@@ -527,10 +625,12 @@ function initializeFormListeners() {
         const searchResults = document.getElementById('searchResults');
         const companySearch = document.getElementById('companySearch');
         
-        if (!event.target.closest('#companySearch') && 
-            !event.target.closest('#searchResults')) {
-            if (searchResults) {
+        // Only proceed if both elements exist
+        if (searchResults && companySearch) {
+            if (!companySearch.contains(event.target) && 
+                !searchResults.contains(event.target)) {
                 searchResults.style.display = 'none';
+                searchResults.innerHTML = '';
             }
         }
     });
@@ -539,4 +639,33 @@ function initializeFormListeners() {
 // Initialize everything when the page loads
 document.addEventListener('DOMContentLoaded', function() {
     initializeFormListeners();
+    
+    // Update the current date time display with Sri Lanka time
+    const currentDateTimeElement = document.getElementById('currentDateTime');
+    if (currentDateTimeElement) {
+        currentDateTimeElement.textContent = formatSriLankaDateTime();
+    }
+    
+    // Live Time Update
+    function updateTime() {
+        const now = new Date();
+        
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        let hours = now.getHours();
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        hours = hours % 12;
+        hours = hours ? hours : 12; // Convert 0 to 12
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        const seconds = String(now.getSeconds()).padStart(2, '0');
+        
+        const timeString = `${year}-${month}-${day} ${String(hours).padStart(2, '0')}:${minutes}:${seconds} ${ampm}`;
+        document.getElementById('currentDateTime').textContent = timeString;
+    }
+
+    // Update time every second
+    setInterval(updateTime, 1000);
+    // Initial update
+    updateTime();
 });
