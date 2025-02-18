@@ -61,6 +61,8 @@ body {
 .header-text-container {
   padding: 1.5rem 1rem;
   text-align: center;
+  margin-bottom: 0 !important;
+  padding-bottom: 0.5rem !important;
 }
 
 /* Form Sections */
@@ -72,6 +74,11 @@ body {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   transition: transform var(--animation-timing) ease;
   animation: fadeIn 0.5s ease-out;
+  opacity: 1 !important;
+  visibility: visible !important;
+  transform: none !important;
+  margin-top: 1rem !important;
+  animation: none !important;
 }
 
 .form-section:hover {
@@ -642,6 +649,9 @@ body {
     transform: none !important; /* Reset any transforms */
     visibility: visible !important;
     overflow: visible !important; /* Add this */
+    position: relative !important; /* Add this */
+    z-index: 1 !important; /* Add this */
+    margin-top: 0 !important; /* Add this */
 }
 
 .form-section {
@@ -720,6 +730,7 @@ body {
     position: relative !important;
     z-index: 2 !important; /* Higher z-index */
     overflow: visible !important;
+    animation: none !important;
 }
 
 .submit-button {
@@ -780,4 +791,61 @@ body {
         animation: none !important;
         transform: none !important;
     }
+}
+
+/* Fix Initial Animation and Spacing */
+.form-wrapper {
+    opacity: 1 !important;
+    transform: none !important;
+    visibility: visible !important;
+    overflow: visible !important;
+    position: relative !important;
+    z-index: 1 !important;
+    margin-top: 0 !important; /* Add this */
+}
+
+.header-text-container {
+    margin-bottom: 0 !important; /* Add this */
+    padding-bottom: 0.5rem !important; /* Add this */
+}
+
+.form-section {
+    opacity: 1 !important;
+    visibility: visible !important;
+    transform: none !important;
+    margin-top: 1rem !important; /* Add this */
+    margin-bottom: 1rem !important;
+    animation: none !important; /* Disable default animation */
+}
+
+/* Modify the fade in animation */
+@keyframes sectionFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Apply new animation to sections */
+#formInputs > .form-section {
+    animation: sectionFadeIn 0.5s ease-out forwards !important;
+}
+
+/* Stagger the animations */
+#formInputs > .form-section:nth-child(1) { animation-delay: 0s !important; }
+#formInputs > .form-section:nth-child(2) { animation-delay: 0.1s !important; }
+#formInputs > .form-section:nth-child(3) { animation-delay: 0.2s !important; }
+#formInputs > .form-section:nth-child(4) { animation-delay: 0.3s !important; }
+#formInputs > .form-section:nth-child(5) { animation-delay: 0.4s !important; }
+
+/* Ensure submit button is always visible */
+.form-section:last-child {
+    opacity: 1 !important;
+    visibility: visible !important;
+    animation: none !important;
+    margin-bottom: 2rem !important;
 }
